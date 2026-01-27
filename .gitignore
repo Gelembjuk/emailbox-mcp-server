@@ -1,0 +1,66 @@
+# Binaries
+mcp-email-stdio
+mcp-email-http
+*/mcp-email-stdio
+*/mcp-email-http
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+http-server/http-server
+http-server/mcp-email-http
+http-server/config.json
+
+stdio-server/stdio-server
+stdio-server/mcp-email-stdio
+stdio-server/config.json
+
+# Configuration (contains secrets)
+config.json
+*/config.json
+
+# Go workspace (local to developer)
+go.work
+go.work.sum
+
+# Go build artifacts
+*.o
+*.a
+*.test
+*.out
+
+# Go coverage
+*.coverprofile
+coverage.txt
+coverage.html
+
+# Go vendor (if not using)
+# vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Claude Code local settings
+.claude/
+
+# Debug files
+*.log
+debug.test
+
+# Temporary files
+*.tmp
+*.temp
