@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -173,16 +175,17 @@ You can use contact names instead of email addresses for the 'to', 'cc', and 'bc
 
 		encoded := base64.StdEncoding.EncodeToString(data)
 
-		result, err := json.MarshalIndent(map[string]interface{}{
-			"filename":     filename,
-			"content_type": contentType,
-			"size":         len(data),
-			"data_base64":  encoded,
-		}, "", "  ")
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to serialize response: %v", err)), nil
+		log.Printf("Returning attachment: filename=%s, content_type=%s, raw_size=%d, base64_size=%d",
+			filename, contentType, len(data), len(encoded))
+
+		if strings.HasPrefix(contentType, "image/") {
+			return mcp.NewToolResultImage(filename, encoded, contentType), nil
 		}
 
-		return mcp.NewToolResultText(string(result)), nil
+		return mcp.NewToolResultResource(filename, mcp.BlobResourceContents{
+			URI:      "attachment://" + filename,
+			MIMEType: contentType,
+			Blob:     encoded,
+		}), nil
 	})
 }
