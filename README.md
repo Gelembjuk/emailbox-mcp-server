@@ -1,15 +1,20 @@
-# MCP IMAP/SMTP Email Server
+# EmailBox MCP Server. Works over IMAP/SMTP Protocols
 
-An MCP (Model Context Protocol) server that provides real email communication capabilities using IMAP for reading and SMTP for sending emails.
+An MCP (Model Context Protocol) server that provides real email communication capabilities using IMAP for reading and SMTP for sending emails. Written with Go.
+
+This is the MCP server to integrate email functionalities into MCP-compatible AI Agents and applications. It supports sending emails in text, markdown, and HTML formats, reading inbox messages, fetching full email contents including attachments, and receiving new email **notifications** via background polling.
+
+The aim is to have a simple yet powerful email MCP server supporting notifications about new emails and full email content retrieval.
 
 ## Features
 
 - **Send emails** via SMTP with support for text, markdown, and HTML formats
 - **Read inbox** via IMAP with filtering options
-- **Get full email contents** including attachments
+- **Get full email contents** including **attachments**
 - **New email notifications** via background polling
 - **Dual transport**: STDIO mode for local MCP clients, HTTP streaming for network deployments
 - **Contact list** support via configuration
+- **Works with Gmail** using App Password (no oAuth2 required)
 
 ## Quick Start
 
