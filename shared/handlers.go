@@ -146,6 +146,94 @@ You can use contact names instead of email addresses for the 'to', 'cc', and 'bc
 		return mcp.NewToolResultText(fmt.Sprintf("Email %s marked as read", emailID)), nil
 	})
 
+	// Register introduction tool
+	introductionTool := mcp.NewTool("introduction",
+		mcp.WithDescription("Returns information about this MCP server, including its description, supported tools, and notifications."),
+	)
+
+	s.AddTool(introductionTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		// Query the server for registered tools via HandleMessage
+		listToolsMsg := []byte(`{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}`)
+		resp := s.HandleMessage(ctx, listToolsMsg)
+
+		// Parse the JSON-RPC response to extract tools
+		respBytes, err := json.Marshal(resp)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to list tools: %v", err)), nil
+		}
+
+		var rpcResp struct {
+			Result struct {
+				Tools []struct {
+					Name        string `json:"name"`
+					Description string `json:"description"`
+					InputSchema struct {
+						Properties map[string]struct {
+							Description string `json:"description"`
+						} `json:"properties"`
+						Required []string `json:"required"`
+					} `json:"inputSchema"`
+				} `json:"tools"`
+			} `json:"result"`
+		}
+		if err := json.Unmarshal(respBytes, &rpcResp); err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to parse tools list: %v", err)), nil
+		}
+
+		// Build simplified tools list with name, description, arguments
+		type toolArg struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+			Required    bool   `json:"required"`
+		}
+		type toolInfo struct {
+			Name        string    `json:"name"`
+			Description string    `json:"description"`
+			Arguments   []toolArg `json:"arguments"`
+		}
+
+		tools := make([]toolInfo, 0, len(rpcResp.Result.Tools))
+		for _, t := range rpcResp.Result.Tools {
+			requiredSet := make(map[string]bool)
+			for _, r := range t.InputSchema.Required {
+				requiredSet[r] = true
+			}
+
+			args := make([]toolArg, 0, len(t.InputSchema.Properties))
+			for name, prop := range t.InputSchema.Properties {
+				args = append(args, toolArg{
+					Name:        name,
+					Description: prop.Description,
+					Required:    requiredSet[name],
+				})
+			}
+
+			tools = append(tools, toolInfo{
+				Name:        t.Name,
+				Description: t.Description,
+				Arguments:   args,
+			})
+		}
+
+		info := map[string]any{
+			"description": "MCP Email Server providing tools for reading and sending emails via IMAP/SMTP protocols. Supports inbox management, email composition, attachments, and real-time new email notifications.",
+			"tools":       tools,
+			"notifications": []map[string]string{
+				{
+					"name":        "new_email",
+					"description": "Sent when a new email is received. Includes email_id, from, subject, received_at, and a short preview of the email body.",
+				},
+			},
+		}
+
+		result, err := json.MarshalIndent(info, "", "  ")
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to serialize response: %v", err)), nil
+		}
+
+		return mcp.NewToolResultText(string(result)), nil
+	})
+
 	// Register get_attachment tool
 	getAttachmentTool := mcp.NewTool("get_attachment",
 		mcp.WithDescription("Get the content of an email attachment as a base64-encoded string."),
